@@ -1,0 +1,10 @@
+File format is following:
+W H <- width and height in pixels
+N <- number of triangles, in the following lines
+Single triangle is expressed in its own line as follows: 
+P1X P1Y P2X P2Y P3X P3Y R G B A
+where PiX is the x-coordinate of i-th vertex of triangle,
+PiY is the y-coordinate of i-th vertex of triangle,
+R G B are values between 0-255, intensity of Red, Green and Blue and
+A is the transparency value for triangle (0-255).
+The painting is started against the white background.
