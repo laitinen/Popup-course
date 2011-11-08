@@ -31,6 +31,8 @@ class Picture {
   size_t height() const;
   
   Color color(int x, int y) const;
+
+  double distance(const Picture& pic) const;
   
  private:
   size_t m_w, m_h;

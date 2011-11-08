@@ -1,27 +1,25 @@
-#include "Common.hpp"
 #include "Picture.hpp"
-#include "Triangle.hpp"
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 int main(int argc, char **argv) {
   using namespace aicha;
-
   if(argc < 3) {
-    std::cout << argv[0] << " generates tga-image of a triangle-file format." << std::endl;
-    std::cout << "Usage " << argv[0] << " input output" << std::endl;
-    return 0;
+    std::cout << "Usage: " <<  argv[0] << " original.tga approximation.tr" << std::endl;
   }
+  Picture orig(argv[1]);
+
   int h, w, n;
-  std::ifstream in(argv[1]);
+  std::ifstream in(argv[2]);
   if(!in) {
     std::cout << "Error opening file " << argv[1] << std::endl;
     return 0;
   }
   in >> w >> h >> n;
-  Picture pic(w,h);
-
+  Picture approx(w,h);
+  
   for(int i = 0; i < n; ++i) {
     int V[6];
     int rgba[4];
@@ -34,7 +32,11 @@ int main(int argc, char **argv) {
       if(rgba[j] > 255) rgba[j] = 255;
     }
     Triangle tr(V, Color(rgba));
-    pic.paintTriangle(tr);
+    approx.paintTriangle(tr);
   }
-  pic.writeToTGA(argv[2]);
+  size_t pixels = orig.width()*orig.height();
+  double nDist = approx.distance(orig); 
+  std::cout << "With " << n << " triangles, the euclidean distance is "
+            << nDist << std::endl;
+  std::cout << (nDist + std::max(0.0, pixels*log(n/10.0))) << std::endl;
 }

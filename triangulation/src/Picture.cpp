@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cassert>
 #include <vector>
+#include <cmath>
 
 namespace aicha {
 
@@ -127,6 +128,26 @@ Color Picture::color(int x, int y) const {
   byte *pixel = m_pic + 3*m_w*y + 3*x;
   return Color(pixel[0], pixel[1], pixel[2], 255);
 }
+
+
+double Picture::distance(const Picture& pic) const {
+  assert(m_w == pic.m_w && m_h == pic.m_h);
+  double dsum = 0;
+  for(size_t x = 0; x < m_w; ++x) {
+    for(size_t y = 0; y < m_h; ++y) {
+      Color c1 = color(x,y), c2 = pic.color(x,y);
+      double tmp = 0;
+      for(size_t i = 0; i < 3; ++i) {
+        double p = c1[i] - (double)c2[i];
+        tmp += p*p;
+      }
+      dsum += sqrt(tmp);
+    }
+  }
+  return dsum;
+}
+
+
 
 int Picture::scanLine(Edge& edge, const Color& color,
                       std::vector<int>& lineEnds,  bool rightSide, int i)

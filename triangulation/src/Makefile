@@ -2,10 +2,13 @@ CC=g++
 WFLAGS=-Wall -Wextra -pedantic -Werror
 OFLAFS=-O3
 
-all : trToTGA TGAtoTGA SimpleApprox
+all : trToTGA TGAtoTGA SimpleApprox distance
 
 clean :
-	rm -f *~ trToTGA TGAtoTGA SimpleApprox *.o
+	rm -f *~ trToTGA TGAtoTGA SimpleApprox distance *.o
+
+distance : Picture.o Common.o distance.cpp
+	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o distance.cpp -o distance
 
 SimpleApprox : Picture.o Common.o SimpleApprox.cpp
 	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o SimpleApprox.cpp -o SimpleApprox
