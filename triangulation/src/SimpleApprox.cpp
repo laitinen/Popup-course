@@ -8,7 +8,7 @@
 
 using namespace aicha;
 
-int sqW = 10;
+int sqW = 20;
 std::vector<Triangle> triangles;
 
 void approximateWithTriangles(const Picture& src, Picture& dst, size_t x1,
@@ -31,14 +31,18 @@ void approximateWithTriangles(const Picture& src, Picture& dst, size_t x1,
     if(tr1Pixels > 0) rgbDst1[i] /= tr1Pixels;
     if(tr2Pixels > 0) rgbDst2[i] /= tr2Pixels;
   }
-  int v1[] = {x1, y1, x1, y2 - 1, x2 - 1, y2 - 1};
-  int v2[] = {x1 + 1, y1, x2-1, y1, x2-1, y2 - 2};
-  Triangle t1(v1, Color(rgbDst1[0], rgbDst1[1], rgbDst1[2], 255));
-  Triangle t2(v2, Color(rgbDst2[0], rgbDst2[1], rgbDst2[2], 255));
-  dst.paintTriangle(t1);
-  dst.paintTriangle(t2);
-  triangles.push_back(t1);
-  triangles.push_back(t2);
+  if(tr1Pixels > 0) {
+    int v1[] = {x1, y1, x1, y2 - 1, x2 - 1, y2 - 1};
+    Triangle t1(v1, Color(rgbDst1[0], rgbDst1[1], rgbDst1[2], 255));
+    dst.paintTriangle(t1);
+    triangles.push_back(t1);
+  }
+  if(tr2Pixels > 0) {
+    int v2[] = {x1 + 1, y1, x2-1, y1, x2-1, y2 - 2};
+    Triangle t2(v2, Color(rgbDst2[0], rgbDst2[1], rgbDst2[2], 255));
+    dst.paintTriangle(t2);
+    triangles.push_back(t2);
+  }
 }
 
 int main(int argc, char** argv) {
