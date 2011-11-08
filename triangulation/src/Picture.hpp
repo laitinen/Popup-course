@@ -13,6 +13,7 @@ struct Edge;
 class Picture {
  public:
   Picture(int w, int h);
+  Picture(const char *tgaFname);
 
   Picture(const Picture& other);
 
@@ -24,7 +25,7 @@ class Picture {
 
   void paintTriangle(const Triangle& triangle);
 
-  void writeToTGA(const char* fname);
+  void writeToTGA(const char* fname) const;
 
  private:
   size_t m_w, m_h;

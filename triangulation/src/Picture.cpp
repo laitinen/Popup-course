@@ -21,6 +21,35 @@ Picture::Picture(const Picture& other) : m_w(other.m_w), m_h(other.m_h) {
   std::copy(other.m_pic, other.m_pic + m_w*m_h*3, m_pic);
 }
 
+Picture::Picture(const char *tgaFname) {
+  std::ifstream in(tgaFname);
+  if(!in) {
+    std::cerr << "Couldn't open file " << tgaFname << std::endl;
+    return;
+  }
+  byte header[18];
+  for(size_t i = 0; i < sizeof(header); ++i) {
+    header[i] = in.get();
+  }
+  if(header[2] != 2) {
+    std::cerr << "Unsupported TGA-format. Use uncompressed RGB's." << std::endl;
+    return;
+  }
+  assert(header[8] == 0);
+  assert(header[9] == 0);
+  assert(header[10] == 0);
+  assert(header[11] == 0);
+  m_w = header[12] | (header[13] << 8);
+  m_h = header[14] | (header[15] << 8);
+  m_pic = new byte[m_w*m_h*3];
+  assert(header[16] == 24);
+  for(size_t i = 0; i < m_w*m_h*3; i += 3) {
+    m_pic[i+2] = in.get();
+    m_pic[i+1] = in.get();
+    m_pic[i] = in.get();
+  }
+}
+
 Picture::~Picture() { delete [] m_pic; }
 
 Picture& Picture::operator=(const Picture& other) {
@@ -40,7 +69,7 @@ void Picture::paintColor(int x, int y, const Color& color) {
   }
 }
 
-void Picture::writeToTGA(const char* fname) {
+void Picture::writeToTGA(const char* fname) const {
   std::ofstream out(fname);
   if(!out) {
     std::cerr << "Couldn't open file " << fname << std::endl;
