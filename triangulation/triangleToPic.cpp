@@ -114,8 +114,8 @@ struct Edge {
 
 int scanLine(Picture& pic, Edge& edge, int *color, std::vector<int>& lineEnds, bool rightSide, int i) {
   if(edge.v1.y == edge.v2.y) {
-    if(rightSide && edge.v1.x > edge.v2.x) std::swap(edge.v1, edge.v2);
-    else if(!rightSide && edge.v1.x < edge.v2.x) std::swap(edge.v1, edge.v2);
+    if(rightSide && edge.v1.x < edge.v2.x) std::swap(edge.v1, edge.v2);
+    else if(!rightSide && edge.v1.x > edge.v2.x) std::swap(edge.v1, edge.v2);
   }
 
   int dx = abs(edge.v1.x - edge.v2.x), dy = edge.height()-1;
@@ -125,13 +125,15 @@ int scanLine(Picture& pic, Edge& edge, int *color, std::vector<int>& lineEnds, b
 
   for(;;) {
     if(rightSide) {
-      for(int x = x1; x > lineEnds[i]; --x) pic.paintColor(x, y1, color);
-    } else {
-      for(int x = x1; x < lineEnds[i]; ++x) pic.paintColor(x, y1, color);
+      for(int x = x1; x >= lineEnds[i]; --x) pic.paintColor(x, y1, color);
+      lineEnds[i] = x1 + 1;
+    } else{
+      for(int x = x1; x <= lineEnds[i]; ++x) pic.paintColor(x, y1, color);
+      lineEnds[i] = x1 - 1;
     }
-    lineEnds.at(i) = x1;
-    if(x1 == x2 && y1 >= y2) break;
+    if(x1 == x2 && y1 == y2) break;
     int e2 = 2*err;
+
     if(e2 > -dy) {
       err -= dy;
       x1 += sx;
@@ -144,13 +146,6 @@ int scanLine(Picture& pic, Edge& edge, int *color, std::vector<int>& lineEnds, b
   }
 
   return i;
-}
-
-double cosAngle(const ivec2& v1, const ivec2& v2) {
-  double n1 = sqrt(dot(v1,v1)), n2 = sqrt(dot(v2,v2));
-  std::cout << "cosAngle of (" << v1.x << ", " << v1.y << ") and ("
-            << v2.x << ", " << v2.y << ") is " << dot(v1,v2)/(n1*n2) << std::endl;
-  return dot(v1,v2)/(n1*n2);
 }
 
 
@@ -175,32 +170,31 @@ void rasterizeTriangle(Picture& pic, ivec2* vertices, int *color) {
   ivec2 remVec = remPoint - edges[2].v1;
   bool right = (longestVec.x*remVec.y - longestVec.y*remVec.x)  < 0;
 
-  if(right) std::cout << "right" << std::endl;
-  else std::cout << "left" << std::endl;
-
   int dx = abs(edges[2].v1.x - edges[2].v2.x), dy = height-1;
   int sx = (edges[2].v1.x < edges[2].v2.x)?1:-1;
   int i = 0;
   int err = dx - dy;
   int x1 = edges[2].v1.x, y1 = edges[2].v1.y, x2 = edges[2].v2.x, y2 = edges[2].v2.y;
-
+  lineEndpoints[i] = x1;
 
   for(;;) {
-    pic.paintColor(x1,y1, color);
     if(x1 == x2 && y1 == y2) break;
     int e2 = 2*err;
+    int nx = x1, ny = y1;
+
     if(e2 > -dy) {
       err -= dy;
-      x1 += sx;
-      if(right && sx > 0) lineEndpoints[i] = x1;
-      else if(!right && sx < 0) lineEndpoints[i] = x1;
+      nx += sx;
     }
     if (e2 < dx) {
       err += dx;
-      if(lineEndpoints[i] == -2) lineEndpoints[i] = x1;
       ++i;
-      ++y1;
+      ++ny;
     }
+    if(ny != y1) lineEndpoints[i] = nx;
+    else if(nx > x1 && !right) lineEndpoints[i] = nx;
+    else if(nx < x1 && right) lineEndpoints[i] = nx;
+    x1 = nx, y1 = ny;
   }
   assert(i == height-1);
   if(edges[1].v1.y < edges[0].v1.y) std::swap(edges[1], edges[0]);
