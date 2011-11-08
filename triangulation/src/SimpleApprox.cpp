@@ -2,29 +2,31 @@
 #include "Picture.hpp"
 #include "Triangle.hpp"
 
+#include <cctype>
 #include <iostream>
 #include <vector>
 
 using namespace aicha;
 
-const int sqW = 10;
+int sqW = 10;
 std::vector<Triangle> triangles;
 
 void approximateWithTriangles(const Picture& src, Picture& dst, size_t x1,
                               size_t y1, size_t x2, size_t y2)
 {
   size_t rgbDst1[3] = {0,0,0}, rgbDst2[3] = {0,0,0};
+  size_t tr1Pixels = 0, tr2Pixels = 0;
   for(size_t x = x1; x < x2; ++x) {
     for(size_t y = y1; y < y2; ++y) {
       Color color = src.color(x,y);
+      if(y - y1 >= x - x1) ++tr1Pixels;
+      else ++tr2Pixels;
       for(size_t i = 0; i < 3; ++i) {
         if(y - y1 >= x - x1) rgbDst1[i] += color[i];
         else rgbDst2[i] += color[i];
       }
     }
   }
-  size_t tr1Pixels = ((x2 - x1)*(y2 - y1))/2;
-  size_t tr2Pixels = ((x2 - x1 - 1)*(y2 - y1 - 1))/2;
   for(size_t i = 0; i < 3; ++i) {
     if(tr1Pixels > 0) rgbDst1[i] /= tr1Pixels;
     if(tr2Pixels > 0) rgbDst2[i] /= tr2Pixels;
@@ -41,9 +43,11 @@ void approximateWithTriangles(const Picture& src, Picture& dst, size_t x1,
 
 int main(int argc, char** argv) {
   if(argc < 3) {
-    std::cout << "Usage: " << argv[0] << " inputTga outputTga" << std::endl;
+    std::cout << "Usage: " << argv[0] << " inputTga outputTga [pixPerSquare]"
+              << std::endl;
     return 0;
   }
+  if(argc >= 4) sqW = atoi(argv[3]);
   Picture in(argv[1]);
   Picture out(in.width(), in.height());
   for(size_t i = 0; i < in.width(); i += sqW)
