@@ -165,10 +165,10 @@ int Picture::scanLine(Edge& edge, const Color& color,
   for(;;) {
     if(rightSide) {
       for(int x = x1; x >= lineEnds[i]; --x) paintColor(x, y1, color);
-      lineEnds[i] = x1 + 1;
+      lineEnds[i] = std::max(x1 + 1, lineEnds[i]);
     } else{
       for(int x = x1; x <= lineEnds[i]; ++x) paintColor(x, y1, color);
-      lineEnds[i] = x1 - 1;
+      lineEnds[i] = std::min(x1 - 1, lineEnds[i]);
     }
     if(x1 == x2 && y1 == y2) break;
     int e2 = 2*err;
