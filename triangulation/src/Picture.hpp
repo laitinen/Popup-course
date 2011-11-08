@@ -12,9 +12,8 @@ struct Edge;
 
 class Picture {
  public:
-  Picture(int w, int h);
+  Picture(size_t w, size_t h);
   Picture(const char *tgaFname);
-
   Picture(const Picture& other);
 
   ~Picture();
@@ -27,6 +26,12 @@ class Picture {
 
   void writeToTGA(const char* fname) const;
 
+  size_t width() const;
+
+  size_t height() const;
+  
+  Color color(int x, int y) const;
+  
  private:
   size_t m_w, m_h;
   byte *m_pic;

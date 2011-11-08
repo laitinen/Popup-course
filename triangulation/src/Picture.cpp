@@ -9,7 +9,7 @@
 
 namespace aicha {
 
-Picture::Picture(int w, int h) : m_w(w), m_h(h) {
+Picture::Picture(size_t w, size_t h) : m_w(w), m_h(h) {
   m_pic = new byte[m_w*m_h*3];
   for(size_t i = 0; i < m_w*m_h*3; ++i) {
     m_pic[i] = 255;
@@ -31,18 +31,15 @@ Picture::Picture(const char *tgaFname) {
   for(size_t i = 0; i < sizeof(header); ++i) {
     header[i] = in.get();
   }
-  if(header[2] != 2) {
+  if(header[2] != 2 || header[16] != 24 || header[8] != 0 ||
+     header[9] != 0 || header[10] != 0|| header[11] != 0)
+  {
     std::cerr << "Unsupported TGA-format. Use uncompressed RGB's." << std::endl;
     return;
   }
-  assert(header[8] == 0);
-  assert(header[9] == 0);
-  assert(header[10] == 0);
-  assert(header[11] == 0);
   m_w = header[12] | (header[13] << 8);
   m_h = header[14] | (header[15] << 8);
   m_pic = new byte[m_w*m_h*3];
-  assert(header[16] == 24);
   for(size_t i = 0; i < m_w*m_h*3; i += 3) {
     m_pic[i+2] = in.get();
     m_pic[i+1] = in.get();
@@ -60,9 +57,14 @@ Picture& Picture::operator=(const Picture& other) {
   return *this;
 }
 
+size_t Picture::width() const { return m_w; }
+
+size_t Picture::height() const { return m_h; }
+
+
 void Picture::paintColor(int x, int y, const Color& color) {
   if( x < 0 || (size_t)x >= m_w || y < 0 || (size_t)y >= m_h ) return;
-  byte *pixel = (m_pic + 3*m_w*y + 3*x);
+  byte *pixel = m_pic + 3*m_w*y + 3*x;
   double alpha = color.normalizedAlpha();
   for(size_t i = 0; i < 3; ++i) {
     pixel[i] = (byte) ((1 - alpha)*pixel[i] + alpha*color[i]);
@@ -119,6 +121,12 @@ struct Edge {
 
 };
 
+Color Picture::color(int x, int y) const {
+  if( x < 0 || (size_t)x >= m_w || y < 0 || (size_t)y >= m_h )
+    return Color(0,0,0,255);
+  byte *pixel = m_pic + 3*m_w*y + 3*x;
+  return Color(pixel[0], pixel[1], pixel[2], 255);
+}
 
 int Picture::scanLine(Edge& edge, const Color& color,
                       std::vector<int>& lineEnds,  bool rightSide, int i)

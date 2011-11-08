@@ -2,12 +2,15 @@ CC=g++
 WFLAGS=-Wall -Wextra -pedantic -Werror
 OFLAFS=-O3
 
-all : trToTGA TGAtoTGA
+all : trToTGA TGAtoTGA SimpleApprox
 
 clean :
-	rm -f *~ trToTGA *.o
+	rm -f *~ trToTGA TGAtoTGA SimpleApprox *.o
 
-TGAtoTGA : Picture.o Common.o
+SimpleApprox : Picture.o Common.o SimpleApprox.cpp
+	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o SimpleApprox.cpp -o SimpleApprox
+
+TGAtoTGA : Picture.o Common.o TGAtoTGA.cpp
 	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o TGAtoTGA.cpp -o TGAtoTGA
 
 trToTGA : triangleToPic.cpp Triangle.hpp Common.o Picture.o
