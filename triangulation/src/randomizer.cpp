@@ -73,6 +73,7 @@ int main(int argc, char **argv) {
     // Swap with the triangle with some existing triangle
     size_t index = rand() % n;
     std::swap(tr, triangles[index]);
+    std::swap(triangles[index], triangles[n-1]);
     Picture tmp(w,h);
     for(int i = 0; i < n; ++i) tmp.paintTriangle(triangles[i]);
 
@@ -84,6 +85,7 @@ int main(int argc, char **argv) {
       bestDistance = distance;
       printDef(argv[2], triangles, w, h);
     } else {
+      std::swap(triangles[index], triangles[n-1]);
       std::swap(tr, triangles[index]);
     }
 
