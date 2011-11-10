@@ -21,6 +21,12 @@ class Triangle {
     }
   }
 
+  Triangle(ivec2* vecs, const Color& color)
+      : m_color(color)
+  {
+    for(int i = 0; i < 3; ++i) m_vertices[i] = vecs[i];
+  }
+
   Color& color() { return m_color; }
   const Color& color() const { return m_color; }
 

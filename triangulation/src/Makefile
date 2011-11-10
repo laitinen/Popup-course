@@ -2,10 +2,13 @@ CC=g++
 WFLAGS=-Wall -Wextra -pedantic -Werror
 OFLAFS=-O3
 
-all : trToTGA TGAtoTGA SimpleApprox distance
+all : trToTGA TGAtoTGA SimpleApprox distance randomz
 
 clean :
-	rm -f *~ trToTGA TGAtoTGA SimpleApprox distance *.o
+	rm -f *~ trToTGA TGAtoTGA SimpleApprox distance randomz *.o
+
+randomz : Picture.o Common.o randomizer.cpp
+	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o randomizer.cpp -o randomz
 
 distance : Picture.o Common.o distance.cpp
 	$(CC) $(OFLAGS) $(WFLAGS) Picture.o Common.o distance.cpp -o distance

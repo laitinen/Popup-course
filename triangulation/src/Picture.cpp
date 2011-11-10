@@ -58,13 +58,23 @@ Picture& Picture::operator=(const Picture& other) {
   return *this;
 }
 
+void Picture::clearColor() {
+  for(size_t i = 0; i < m_w*m_h*3; ++i) {
+    m_pic[i] = 255;
+  }
+}
+
 size_t Picture::width() const { return m_w; }
 
 size_t Picture::height() const { return m_h; }
 
+bool Picture::insidePicture(int x, int y) const {
+  return ( x >= 0 && (size_t)x < m_w && y >= 0 && (size_t)y < m_h );
+}
+
 
 void Picture::paintColor(int x, int y, const Color& color) {
-  if( x < 0 || (size_t)x >= m_w || y < 0 || (size_t)y >= m_h ) return;
+  if(!insidePicture(x, y)) return;
   byte *pixel = m_pic + 3*m_w*y + 3*x;
   double alpha = color.normalizedAlpha();
   for(size_t i = 0; i < 3; ++i) {
@@ -187,21 +197,14 @@ int Picture::scanLine(Edge& edge, const Color& color,
   return i;
 }
 
-
-void Picture::paintTriangle(const Triangle& triangle) {
-  Edge edges[3];
-  for(int i = 0; i < 3; ++i) {
-    edges[i] = Edge(triangle.vertex(i), triangle.vertex((i+1)%3));
-  }
+// Returns whether the last point is on right or leftside
+bool Picture::gatherEndPoints(Edge *edges, std::vector<int>& endPoints) const {
+  // This is subprocedure used in rasterization and colorAverage
+  assert(endPoints.size() == 0);
   std::sort(edges, edges+3);
   size_t height = edges[2].height();
-  std::vector<int> lineEndpoints;
-  lineEndpoints.resize(height);
+  endPoints.resize(height);
 
-  // Now apply Bresenham's line rasterization algorithm for lines!
-  // First the heightest line is rasterized.
-  // Decide whether the last remaining point is on the left or the right side
-  // of the longest edge by using the properties of cross-product.
   ivec2 remPoint = edges[0].v1;
   if(remPoint == edges[2].v1 || remPoint == edges[2].v2) remPoint = edges[0].v2;
 
@@ -215,10 +218,10 @@ void Picture::paintTriangle(const Triangle& triangle) {
   int err = dx - dy;
   int x1 = edges[2].v1.x, y1 = edges[2].v1.y, x2 = edges[2].v2.x, y2 = edges[2].v2.y;
 
-  // The idea is to fill vector lineEndpoints to tell which is the farthest
+  // The idea is to fill vector endPoints to tell which is the farthest
   // point to color at the same y-coordinate, when handling the last two
   // edges. 
-  lineEndpoints[i] = x1;
+  endPoints[i] = x1;
 
   for(;;) {
     if(x1 == x2 && y1 == y2) break;
@@ -234,16 +237,99 @@ void Picture::paintTriangle(const Triangle& triangle) {
       ++i;
       ++ny;
     }
-    if(ny != y1) lineEndpoints[i] = nx;
-    else if(nx > x1 && !onRightSide) lineEndpoints[i] = nx;
-    else if(nx < x1 && onRightSide) lineEndpoints[i] = nx;
+    if(ny != y1) endPoints[i] = nx;
+    else if(nx > x1 && !onRightSide) endPoints[i] = nx;
+    else if(nx < x1 && onRightSide) endPoints[i] = nx;
     x1 = nx, y1 = ny;
   }
   assert((size_t)i == height-1);
   if(edges[1].v1.y < edges[0].v1.y) std::swap(edges[1], edges[0]);
-  i = 0;
+  return onRightSide;
+}
+
+
+void Picture::paintTriangle(const Triangle& triangle) {
+  Edge edges[3];
+  for(int i = 0; i < 3; ++i) {
+    edges[i] = Edge(triangle.vertex(i), triangle.vertex((i+1)%3));
+  }
+  std::vector<int> lineEndpoints;
+  bool onRightSide = gatherEndPoints(edges, lineEndpoints);
+  int i = 0;
   i = scanLine(edges[0], triangle.color(), lineEndpoints, onRightSide, i);
   scanLine(edges[1], triangle.color(), lineEndpoints, onRightSide, i);
+}
+
+// This is used for sampling the colors inside given triangle
+int Picture::scanLine(Edge& edge, std::vector<int>& lineEnds,  bool rightSide,
+                      int i, size_t* rgb, size_t& pix) const
+{
+  if(edge.v1.y == edge.v2.y) {
+    if(rightSide && edge.v1.x < edge.v2.x) std::swap(edge.v1, edge.v2);
+    else if(!rightSide && edge.v1.x > edge.v2.x) std::swap(edge.v1, edge.v2);
+  }
+
+  int dx = abs(edge.v1.x - edge.v2.x), dy = edge.height()-1;
+  int sx = (edge.v1.x < edge.v2.x)?1:-1;
+  int err = dx - dy;
+  int x1 = edge.v1.x, y1 = edge.v1.y, x2 = edge.v2.x, y2 = edge.v2.y;
+
+  for(;;) {
+    if(rightSide) {
+      for(int x = x1; x >= lineEnds[i]; --x) {
+        if(insidePicture(x,y1)) {
+          ++pix;
+          Color c = color(x, y1);
+          for(int i = 0; i < 3; ++i) rgb[i] += c[i];
+        }
+      }
+      lineEnds[i] = std::max(x1 + 1, lineEnds[i]);
+    } else{
+      for(int x = x1; x <= lineEnds[i]; ++x) {
+        if(insidePicture(x,y1)) {
+          ++pix;
+          Color c = color(x, y1);
+          for(int i = 0; i < 3; ++i) rgb[i] += c[i];
+        }
+      }
+      lineEnds[i] = std::min(x1 - 1, lineEnds[i]);
+    }
+    if(x1 == x2 && y1 == y2) break;
+    int e2 = 2*err;
+
+    if(e2 > -dy) {
+      err -= dy;
+      x1 += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      ++y1;
+      ++i;
+    }
+  }
+
+  return i;
+}
+
+
+Color Picture::getAverageColor(const ivec2& v1, const ivec2& v2, const ivec2& v3) const
+{
+  // This algorithm is basically the same algorithm as in rasterization
+  Edge edges[3];
+  edges[0] = Edge(v1, v2);
+  edges[1] = Edge(v3, v2);
+  edges[2] = Edge(v1, v3);
+
+  std::vector<int> lineEndpoints;
+  bool onRightSide = gatherEndPoints(edges, lineEndpoints);
+  int i = 0;
+  size_t rgb[4] = {0}, pix = 0;
+  i = scanLine(edges[0], lineEndpoints, onRightSide, i, rgb, pix);
+  scanLine(edges[1], lineEndpoints, onRightSide, i, rgb, pix);
+  if(pix == 0) return Color(0,0,0,0);
+  for(int i = 0; i < 3; ++i) rgb[i] /= pix;
+  rgb[3] = 255;
+  return Color(rgb);
 }
 
 } //namespace aicha

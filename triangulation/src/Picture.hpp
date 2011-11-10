@@ -24,6 +24,8 @@ class Picture {
 
   void paintTriangle(const Triangle& triangle);
 
+  Color getAverageColor(const ivec2& v1, const ivec2& v2, const ivec2& v3) const;
+
   void writeToTGA(const char* fname) const;
 
   size_t width() const;
@@ -34,12 +36,19 @@ class Picture {
 
   double distance(const Picture& pic) const;
   
+  bool insidePicture(int x, int y) const;
+
+  void clearColor();
+
  private:
   size_t m_w, m_h;
   byte *m_pic;
 
   int scanLine(Edge& edge, const Color& color, std::vector<int>& lineEnds,
                bool rightSide, int startIndex);
+  int scanLine(Edge& edge, std::vector<int>& lineEnds,  bool rightSide,
+               int i, size_t* rgb, size_t& pix) const;
+  bool gatherEndPoints(Edge* edges, std::vector<int>& endPoints) const;
 };
 
 } //namespace aicha
