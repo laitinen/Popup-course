@@ -8,6 +8,7 @@ int main(int argc, char **argv) {
   using namespace aicha;
   if(argc < 3) {
     std::cout << "Usage: " <<  argv[0] << " original.tga approximation.tr" << std::endl;
+    return 0;
   }
   Picture orig(argv[1]);
 
