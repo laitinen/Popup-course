@@ -1,6 +1,6 @@
 CC=g++
+OFLAGS=-O3
 WFLAGS=-Wall -Wextra -pedantic -Werror
-OFLAFS=-O3
 
 all : trToTGA TGAtoTGA SimpleApprox distance randomz
 
